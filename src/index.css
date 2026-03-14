@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 延伸背景：整個視窗使用與內容區相同的粉膚色 (canvas-soft) */
+html,
+body,
+#root {
+  height: 100%;
+  background-color: #f8f4f6;
+}
+
+/* 全站僅手機版：不論螢幕大小都顯示手機尺寸（430px 寬，置中） */
+.mobile-preview-frame {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+}
+
+body {
+  font-family: "Roboto", "Noto Sans TC", sans-serif;
+  @apply text-gray-900;
+}
+
+button:disabled {
+  @apply cursor-not-allowed;
+}
+

@@ -1,0 +1,215 @@
+{
+  "meta": {
+    "maxBeads": 7,
+    "currency": "TWD"
+  },
+  "clasps": [
+    {
+      "id": "u_clasp",
+      "name": "U字扣",
+      "code": "U",
+      "image": "/images/clasps/u.jpg",
+      "price": 20
+    },
+    {
+      "id": "star",
+      "name": "星星扣",
+      "code": "STAR",
+      "image": "/images/clasps/star.jpg",
+      "price": 25
+    },
+    {
+      "id": "moon",
+      "name": "月亮扣",
+      "code": "MOON",
+      "image": "/images/clasps/moon.jpg",
+      "price": 25
+    }
+  ],
+  "beadGroups": [
+    {
+      "id": "groupA",
+      "name": "A組字母珠",
+      "codePrefix": "A",
+      "description": "字母與符號主體珠子",
+      "beads": [
+        {
+          "id": "square_symbol_black",
+          "name": "方形-符號黑",
+          "code": "方黑",
+          "image": "/images/beads/square_symbol_black.png",
+          "price": 5
+        },
+        {
+          "id": "square_alpha_black",
+          "name": "方形-英文黑",
+          "code": "方英黑",
+          "image": "/images/beads/square_alpha_black.png",
+          "price": 5
+        },
+        {
+          "id": "square_alpha_silver",
+          "name": "方形-英文銀",
+          "code": "方英銀",
+          "image": "/images/beads/square_alpha_silver.png",
+          "price": 6
+        },
+        {
+          "id": "square_number_0",
+          "name": "0",
+          "code": "0",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "square_number_1",
+          "name": "1",
+          "code": "1",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "square_number_2",
+          "name": "2",
+          "code": "2",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "square_number_3",
+          "name": "3",
+          "code": "3",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "square_number_4",
+          "name": "4",
+          "code": "4",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "square_number_5",
+          "name": "5",
+          "code": "5",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "square_number_6",
+          "name": "6",
+          "code": "6",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "square_number_7",
+          "name": "7",
+          "code": "7",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "square_number_8",
+          "name": "8",
+          "code": "8",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "square_number_9",
+          "name": "9",
+          "code": "9",
+          "image": "/images/beads/square_number.png",
+          "price": 5
+        },
+        {
+          "id": "round_alpha_clear",
+          "name": "圓形-英文透",
+          "code": "圓透",
+          "image": "/images/beads/round_alpha_clear.png",
+          "price": 6
+        },
+        {
+          "id": "round_alpha_silver",
+          "name": "圓形-英文銀",
+          "code": "圓銀",
+          "image": "/images/beads/round_alpha_silver.png",
+          "price": 6
+        },
+        {
+          "id": "round_alpha_black",
+          "name": "圓形-英文黑",
+          "code": "圓黑",
+          "image": "/images/beads/round_alpha_black.png",
+          "price": 6
+        }
+      ]
+    },
+    {
+      "id": "groupB",
+      "name": "B組裝飾珠",
+      "codePrefix": "B",
+      "description": "搭配使用的裝飾性珠子",
+      "beads": [
+        {
+          "id": "heart_black",
+          "name": "愛心-黑",
+          "code": "愛黑",
+          "image": "/images/beads/heart_black.png",
+          "price": 8
+        },
+        {
+          "id": "heart_white",
+          "name": "愛心-白",
+          "code": "愛白",
+          "image": "/images/beads/heart_white.png",
+          "price": 8
+        },
+        {
+          "id": "heart_hollow",
+          "name": "愛心-鏤空",
+          "code": "愛鏤",
+          "image": "/images/beads/heart_hollow.png",
+          "price": 9
+        },
+        {
+          "id": "heart_square",
+          "name": "方形珠愛心",
+          "code": "方愛",
+          "image": "/images/beads/heart_black.png",
+          "price": 8
+        },
+        {
+          "id": "round_black",
+          "name": "圓珠-黑",
+          "code": "圓珠黑",
+          "image": "/images/beads/round_black.png",
+          "price": 5
+        },
+        {
+          "id": "round_silver",
+          "name": "圓珠-銀",
+          "code": "圓珠銀",
+          "image": "/images/beads/round_silver.png",
+          "price": 6
+        },
+        {
+          "id": "round_mermaid_white",
+          "name": "圓珠-人魚白",
+          "code": "人魚白",
+          "image": "/images/beads/round_mermaid_white.png",
+          "price": 7
+        },
+        {
+          "id": "round_mermaid_clear",
+          "name": "圓珠-人魚透",
+          "code": "人魚透",
+          "image": "/images/beads/round_mermaid_clear.png",
+          "price": 7
+        }
+      ]
+    }
+  ]
+}
