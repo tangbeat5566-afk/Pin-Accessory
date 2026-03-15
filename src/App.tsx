@@ -3,6 +3,8 @@ import config from "../config.json";
 
 type Config = typeof config;
 type Clasp = Config["clasps"][number];
+type Tassel = Config["tassels"][number];
+type Pendant = Config["pendants"][number];
 type BeadGroup = Config["beadGroups"][number];
 type Bead = BeadGroup["beads"][number];
 
@@ -163,9 +165,15 @@ function getBeadImageUrl(sel: SelectedBead | null): string {
     switch (bead.id) {
       case "heart_black":
         return "/images/beads/d-h-b.png";
+      case "heart_black_flip":
+        return "/images/beads/d-h-b.png";
       case "heart_white":
         return "/images/beads/d-h-w.png";
+      case "heart_white_flip":
+        return "/images/beads/d-h-w.png";
       case "heart_hollow":
+        return "/images/beads/d-h-h.png";
+      case "heart_hollow_flip":
         return "/images/beads/d-h-h.png";
       case "heart_square":
         return "/images/beads/s-b-heart.png";
@@ -177,11 +185,35 @@ function getBeadImageUrl(sel: SelectedBead | null): string {
         return "/images/beads/d-r-fw.png";
       case "round_mermaid_clear":
         return "/images/beads/d-r-ft.png";
+      case "other_1":
+        return "/images/beads/d-o-1.png";
     }
   }
 
   // 預設回退到原本設定的圖片
   return bead.image ?? "/images/beads/no.png";
+}
+
+/** 選單內字母／符號按鈕對應的圖片路徑（依目前 tab + subFilter） */
+function getLetterButtonImageSrc(
+  tabId: BeadTabId,
+  subFilter: string,
+  letterOrSym: string
+): string {
+  const lower = letterOrSym.toLowerCase();
+  if (tabId === "squareLetter") {
+    if (subFilter === "black") {
+      if (letterOrSym === "#") return "/images/beads/s-b-hash.png";
+      if (letterOrSym === "❤︎") return "/images/beads/s-b-heart.png";
+      return `/images/beads/s-b-${lower}.png`;
+    }
+    if (subFilter === "silver") return `/images/beads/s-s-${lower}.png`;
+  }
+  if (tabId === "roundLetter") {
+    if (subFilter === "silver") return `/images/beads/r-s-${lower}.png`;
+    if (subFilter === "clear") return `/images/beads/r-t-${lower}.png`;
+  }
+  return "/images/beads/no.png";
 }
 
 function buildOrderCode(clasp: Clasp, selected: (SelectedBead | null)[]): string {
@@ -214,10 +246,17 @@ export default function App() {
   const [screenshotMode, setScreenshotMode] = useState(false);
   const [openPanel, setOpenPanel] = useState<"clasp" | "bead" | null>(null);
   const [claspPanelType, setClaspPanelType] = useState<"clasp" | "pendant" | "tassel">("clasp");
+  const [selectedTasselId, setSelectedTasselId] = useState<string | null>(null);
+  const [selectedPendantId, setSelectedPendantId] = useState<string | null>(null);
 
   const selectedClasp = useMemo(
     () => config.clasps.find((c) => c.id === selectedClaspId) ?? config.clasps[0],
     [selectedClaspId]
+  );
+
+  const selectedPendant = useMemo(
+    () => (config.pendants ?? []).find((p: Pendant) => (p.id || "") === (selectedPendantId ?? "")) ?? null,
+    [selectedPendantId]
   );
 
   const orderCode = useMemo(
@@ -275,6 +314,16 @@ export default function App() {
           const displayLabel =
             label ??
             bead.name.replace(/^圓珠-/, "").replace(/^愛心-/, "");
+          const isNumberTab = beadActiveTab === "number";
+          const numberImgSrc =
+            displayLabel === "#"
+              ? "/images/beads/s-b-hash.png"
+              : `/images/beads/s-b-${displayLabel}.png`;
+          const beadImgSrc = getBeadImageUrl({
+            id: bead.id,
+            groupId: group.id,
+            ...(letter && { letter }),
+          });
           return (
             <button
               key={`${group.id}-${bead.id}${letter ?? ""}`}
@@ -282,10 +331,27 @@ export default function App() {
               onClick={() => handleSetBead((activeBeadSlot ?? 1) - 1, group.id, bead.id, letter)}
               className={[
                 "rounded-xl border px-3 py-3 text-base text-center font-semibold leading-tight transition",
-                "bg-white shadow-sm border-gray-200 active:scale-95 active:bg-gray-100"
+                "bg-white shadow-sm border-gray-200 active:scale-95 active:bg-gray-100 flex items-center justify-center"
               ].join(" ")}
             >
-              <span className="block">{displayLabel}</span>
+              {isNumberTab ? (
+                <img
+                  src={numberImgSrc}
+                  alt={displayLabel}
+                  className="h-8 w-8 object-contain"
+                />
+              ) : (
+                <img
+                  src={beadImgSrc}
+                  alt={displayLabel}
+                  className="h-8 w-8 object-contain"
+                  style={
+                    ["heart_hollow_flip", "heart_black_flip", "heart_white_flip"].includes(bead.id)
+                      ? { transform: "scaleX(-1)" }
+                      : undefined
+                  }
+                />
+              )}
             </button>
           );
         })}
@@ -314,7 +380,7 @@ export default function App() {
                 Ch_1217 ✦ 別針飾品模擬器
               </h1>
               <p className="mt-1 text-sm text-gray-500">
-                實際效果與大小和成品會產生差異，僅供製作溝通。
+                實際效果與大小和成品會產生差異，僅供製作溝通，無法以此模擬圖要求成品。
               </p>
             </div>
             <button
@@ -336,32 +402,84 @@ export default function App() {
             <div className="relative flex h-[600px] w-full max-w-full overflow-hidden rounded-2xl bg-white shadow-md">
               {/* 左側 70% - 背景圖 + 鎖扣圖片（小螢幕置中，較大螢幕固定座標） */}
               <div
-                className="relative w-[250px] h-[500px] flex-shrink-0 overflow-hidden bg-white flex items-center justify-center md:block"
+                className="relative w-[250px] h-[600px] flex-shrink-0 overflow-hidden bg-white flex items-center justify-center md:block"
               >
+                {selectedTasselId && (() => {
+                  const tassel = config.tassels?.find((t: Tassel) => t.id === selectedTasselId);
+                  return tassel?.image ? (
+                    <img
+                      src={tassel.image}
+                      alt={tassel.name}
+                      className="absolute inset-0 object-contain"
+                      style={{ left: '-31px', top: '118px', width: '300px', height: '450px', transform: 'rotate(12deg)' }}
+                    />
+                  ) : null;
+                })()}
                 <img
                   src="/images/bg.png"
                   alt="background"
                   className="absolute inset-0 object-contain"
-                  style={{ left: '20px', top: '133px', width: '300px', height: '300px' }}
+                  style={{ left: '20px', top: '140px', width: '300px', height: '300px' }}
                 />
+                {selectedPendant?.image && (
+                  <img
+                    src={selectedPendant.image}
+                    alt=""
+                    className="absolute left-[46px] top-[176px] h-[120px] w-auto object-contain"
+                    style={{ zIndex: 1, transform: 'rotate(20deg)' }}
+                  />
+                )}
                 <img
                   src={selectedClasp.image}
                   alt={selectedClasp.name}
                   className="w-[120px] h-[120px] object-cover object-center absolute left-[90px] top-[29px]"
                 />
-                {[0, 1, 2, 3, 4, 5, 6].map((i) => {
-                  const sel = selectedBeads[i] ?? null;
-                  const imgSrc = getBeadImageUrl(sel);
-                  return (
-                    <img
-                      key={i}
-                      src={imgSrc}
-                      alt={`beads preview ${i + 1}`}
-                      className="absolute w-[24px] h-[24px] object-cover object-center left-[144px]"
-                      style={{ top: `${181 + i * 24}px` }}
-                    />
+                {(() => {
+                  const BEAD_GAP = 2;
+                  const baseTop = 184;
+                  const getPreviewSize = (imgSrc: string) => {
+                    if (imgSrc === "/images/beads/d-h-h.png") return 30;
+                    if (
+                      imgSrc === "/images/beads/d-h-b.png" ||
+                      imgSrc === "/images/beads/d-h-w.png" ||
+                      imgSrc === "/images/beads/d-o-1.png"
+                    )
+                      return 28;
+                    return 23;
+                  };
+                  const sizes = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+                    const sel = selectedBeads[i] ?? null;
+                    return getPreviewSize(getBeadImageUrl(sel));
+                  });
+                  const tops = sizes.map((_, i) =>
+                    i === 0 ? baseTop : baseTop + sizes.slice(0, i).reduce((sum, h) => sum + h + BEAD_GAP, 0)
                   );
-                })}
+                  return [0, 1, 2, 3, 4, 5, 6].map((i) => {
+                    const sel = selectedBeads[i] ?? null;
+                    const imgSrc = getBeadImageUrl(sel);
+                    const size = getPreviewSize(imgSrc);
+                    const isFlipBead =
+                      sel?.groupId === "groupB" &&
+                      ["heart_hollow_flip", "heart_black_flip", "heart_white_flip"].includes(sel?.id ?? "");
+                    return (
+                      <img
+                        key={i}
+                        src={imgSrc}
+                        alt={`beads preview ${i + 1}`}
+                        className="absolute object-cover object-center"
+                        style={{
+                          left: "158.5px",
+                          top: `${tops[i]}px`,
+                          width: size,
+                          height: size,
+                          transform: isFlipBead
+                            ? "translateX(-50%) rotate(90deg) scaleX(-1)"
+                            : "translateX(-50%) rotate(90deg)",
+                        }}
+                      />
+                    );
+                  });
+                })()}
               </div>
               {/* 右側 - 鎖扣與控制區（填滿剩餘空間） */}
               <div className="flex h-full flex-1 min-w-0 flex-col bg-white/90 p-4 pl-0">
@@ -393,7 +511,7 @@ export default function App() {
                       <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-amber-600 font-sans">
                         ✦
                       </div>
-                      <span className="text-sm leading-none text-gray-600">換掛件</span>
+                      <span className="text-sm leading-none text-gray-600">加掛件</span>
                     </button>
                     <button
                       type="button"
@@ -406,7 +524,7 @@ export default function App() {
                       <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-sky-500 font-sans">
                         〰
                       </div>
-                      <span className="text-sm leading-none text-gray-600">換流蘇</span>
+                      <span className="text-sm leading-none text-gray-600">加流蘇</span>
                     </button>
                   </div>
                   {/* 群組 2：其餘 7 個按鈕一組（每顆不同顏色） */}
@@ -428,7 +546,6 @@ export default function App() {
                           key={idx}
                           type="button"
                           onClick={() => {
-                            setBeadActiveTab("squareLetter");
                             setActiveBeadSlot(idx + 1);
                             setOpenPanel("bead");
                           }}
@@ -485,41 +602,124 @@ export default function App() {
                     ? "掛件"
                     : "流蘇"}
                 </h2>
-                <button
-                  type="button"
-                  onClick={() => setOpenPanel(null)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 active:scale-95"
-                  aria-label="關閉"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 6 6 18M6 6l12 12" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-2">
+                  {claspPanelType === "tassel" && selectedTasselId !== null && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTasselId(null)}
+                      className="rounded-full px-3 py-1.5 text-sm font-medium transition border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 active:scale-95"
+                    >
+                      不需要流蘇
+                    </button>
+                  )}
+                  {claspPanelType === "pendant" && selectedPendantId !== null && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPendantId(null);
+                        setOpenPanel(null);
+                      }}
+                      className="rounded-full px-3 py-1.5 text-sm font-medium transition border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 active:scale-95"
+                    >
+                      不加掛件
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setOpenPanel(null)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 active:scale-95"
+                    aria-label="關閉"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
             <div className="mt-3 flex-1 overflow-y-auto pb-4">
               <div className="mt-1 grid grid-cols-3 gap-2">
-                {config.clasps.map((clasp) => {
-                  const active = clasp.id === selectedClaspId;
-                  return (
-                    <button
-                      key={clasp.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedClaspId(clasp.id);
-                        setOpenPanel(null);
-                      }}
-                      className={[
-                        "flex flex-col items-center justify-center rounded-xl border px-2 py-2 text-sm transition",
-                        active
-                          ? "border-gray-900 bg-gray-900 text-white shadow-sm"
-                          : "border-gray-200 bg-white text-gray-700 active:bg-gray-100"
-                      ].join(" ")}
-                    >
-                      <span className="text-base font-medium">{clasp.name}</span>
-                    </button>
-                  );
-                })}
+                {claspPanelType === "tassel"
+                  ? (config.tassels ?? []).filter((t: Tassel) => t.id !== "").map((tassel) => {
+                      const active = (tassel.id || null) === selectedTasselId;
+                      return (
+                        <button
+                          key={tassel.id || "none"}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTasselId(tassel.id || null);
+                            setOpenPanel(null);
+                          }}
+                          className={[
+                            "flex flex-col items-center justify-center rounded-xl border-2 px-2 py-0 text-sm transition min-h-[144px]",
+                            active
+                              ? "border-transparent shadow-sm [background:linear-gradient(white,white)_padding-box,linear-gradient(135deg,#f9a8d4,#e879f9,#a384fc)_border-box] [background-clip:padding-box,border-box] [background-origin:padding-box,border-box]"
+                              : "border-gray-200 bg-white text-gray-700 active:bg-gray-100"
+                          ].join(" ")}
+                        >
+                          {tassel.image ? (
+                            <img
+                              src={tassel.image}
+                              alt={tassel.name}
+                              className="h-36 w-auto max-w-full object-contain"
+                            />
+                          ) : (
+                            <span className="text-base font-medium">{tassel.name}</span>
+                          )}
+                        </button>
+                      );
+                    })
+                  : claspPanelType === "pendant"
+                  ? (config.pendants ?? []).filter((p: Pendant) => p.id !== "").map((p: Pendant) => {
+                      const active = (p.id || null) === selectedPendantId;
+                      return (
+                        <button
+                          key={p.id || "none"}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPendantId(p.id || null);
+                            setOpenPanel(null);
+                          }}
+                          className={[
+                            "flex flex-col items-center justify-center rounded-xl border-2 px-2 py-2 text-sm transition min-h-[120px]",
+                            active
+                              ? "border-transparent shadow-sm [background:linear-gradient(white,white)_padding-box,linear-gradient(135deg,#f9a8d4,#e879f9,#a384fc)_border-box] [background-clip:padding-box,border-box] [background-origin:padding-box,border-box]"
+                              : "border-gray-200 bg-white text-gray-700 active:bg-gray-100"
+                          ].join(" ")}
+                        >
+                          {p.image ? (
+                            <img
+                              src={p.image}
+                              alt=""
+                              className="h-24 w-auto max-w-full object-contain"
+                            />
+                          ) : (
+                            <div className="h-16 w-16 rounded-full border-2 border-dashed border-gray-300 bg-gray-50" aria-hidden />
+                          )}
+                        </button>
+                      );
+                    })
+                  : config.clasps.map((clasp) => {
+                      const active = clasp.id === selectedClaspId;
+                      return (
+                        <button
+                          key={clasp.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedClaspId(clasp.id);
+                            setOpenPanel(null);
+                          }}
+                          className={[
+                            "flex flex-col items-center justify-center rounded-xl border-2 px-2 py-2 text-sm transition",
+                            active
+                              ? "border-transparent shadow-sm [background:linear-gradient(white,white)_padding-box,linear-gradient(135deg,#f9a8d4,#e879f9,#a384fc)_border-box] [background-clip:padding-box,border-box] [background-origin:padding-box,border-box]"
+                              : "border-gray-200 bg-white text-gray-700 active:bg-gray-100"
+                          ].join(" ")}
+                        >
+                          <span className="text-base font-medium">{clasp.name}</span>
+                        </button>
+                      );
+                    })}
               </div>
             </div>
           </div>
@@ -618,9 +818,6 @@ export default function App() {
               )}
             </div>
             <div className="mt-3 flex-1 space-y-4 overflow-y-auto pb-4">
-              {beadActiveTab === "number" && (
-                <p className="text-sm text-gray-500">只有黑色方形珠</p>
-              )}
               {isLetterBeadTab(beadActiveTab, beadSubFilter) ? (
                 <div className="grid grid-cols-4 gap-2">
                   {/* 方形字母-黑色：額外符號 #、❤︎ */}
@@ -635,10 +832,14 @@ export default function App() {
                         }
                         className={[
                           "rounded-xl border px-3 py-3 text-base text-center font-semibold leading-tight transition",
-                          "bg-white shadow-sm border-gray-200 active:scale-95 active:bg-gray-100"
+                          "bg-white shadow-sm border-gray-200 active:scale-95 active:bg-gray-100 flex items-center justify-center"
                         ].join(" ")}
                       >
-                        {sym}
+                        <img
+                          src={getLetterButtonImageSrc(beadActiveTab, beadSubFilter, sym)}
+                          alt={sym}
+                          className="h-8 w-8 object-contain"
+                        />
                       </button>
                     ))}
                   {LETTERS.map((letter) => {
@@ -652,10 +853,14 @@ export default function App() {
                         }
                         className={[
                           "rounded-xl border px-3 py-3 text-base text-center font-semibold leading-tight transition",
-                          "bg-white shadow-sm border-gray-200 active:scale-95 active:bg-gray-100"
+                          "bg-white shadow-sm border-gray-200 active:scale-95 active:bg-gray-100 flex items-center justify-center"
                         ].join(" ")}
                       >
-                        {letter}
+                        <img
+                          src={getLetterButtonImageSrc(beadActiveTab, beadSubFilter, letter)}
+                          alt={letter}
+                          className="h-8 w-8 object-contain"
+                        />
                       </button>
                     );
                   })}
