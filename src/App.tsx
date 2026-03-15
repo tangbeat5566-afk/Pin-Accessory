@@ -511,7 +511,7 @@ export default function App() {
                       <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-amber-600 font-sans">
                         ✦
                       </div>
-                      <span className="text-sm leading-none text-gray-600">加掛件</span>
+                      <span className="text-sm leading-none text-gray-600">加掛飾</span>
                     </button>
                     <button
                       type="button"
@@ -589,7 +589,7 @@ export default function App() {
           {/* 控制面板：彈出視窗（點擊上方功能按鈕後，以底部彈出方式顯示） */}
       {!screenshotMode && openPanel && (
         <>
-          {/* 鎖扣 / 掛件 / 流蘇 選擇面板 */}
+          {/* 鎖扣 / 掛飾 / 流蘇 選擇面板 */}
           {openPanel === "clasp" && (
         <div className="fixed inset-x-0 bottom-0 top-[50px] z-20 rounded-t-3xl bg-white px-4 pb-6 pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.18)]">
           <div className="mx-auto flex h-full max-w-md flex-col">
@@ -599,14 +599,17 @@ export default function App() {
                   {claspPanelType === "clasp"
                     ? "鎖扣"
                     : claspPanelType === "pendant"
-                    ? "掛件"
+                    ? "掛飾"
                     : "流蘇"}
                 </h2>
                 <div className="flex items-center gap-2">
                   {claspPanelType === "tassel" && selectedTasselId !== null && (
                     <button
                       type="button"
-                      onClick={() => setSelectedTasselId(null)}
+                      onClick={() => {
+                        setSelectedTasselId(null);
+                        setOpenPanel(null);
+                      }}
                       className="rounded-full px-3 py-1.5 text-sm font-medium transition border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 active:scale-95"
                     >
                       不需要流蘇
@@ -621,7 +624,7 @@ export default function App() {
                       }}
                       className="rounded-full px-3 py-1.5 text-sm font-medium transition border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 active:scale-95"
                     >
-                      不加掛件
+                      不加掛飾
                     </button>
                   )}
                   <button
