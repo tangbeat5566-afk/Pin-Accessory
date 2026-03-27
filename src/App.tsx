@@ -216,22 +216,6 @@ function getLetterButtonImageSrc(
   return "/images/beads/no.png";
 }
 
-function buildOrderCode(clasp: Clasp, selected: (SelectedBead | null)[]): string {
-  const parts: string[] = [];
-  parts.push(`${clasp.name}`);
-
-  for (const item of selected.filter((s): s is SelectedBead => s !== null)) {
-    const group = getGroupById(item.groupId);
-    const bead = getBeadByIds(item.groupId, item.id);
-    if (!group || !bead) continue;
-    const prefix = group.codePrefix ?? "";
-    const code = item.letter ? `${bead.code}-${item.letter}` : bead.code;
-    parts.push(`${prefix}-${code}`);
-  }
-
-  return parts.join(" | ");
-}
-
 export default function App() {
   const [beadActiveTab, setBeadActiveTab] = useState<BeadTabId>("squareLetter");
   const [beadSubFilter, setBeadSubFilter] = useState<string>("silver");
@@ -242,8 +226,6 @@ export default function App() {
   const [selectedBeads, setSelectedBeads] = useState<(SelectedBead | null)[]>(
     () => Array(7).fill(null)
   );
-  const [copied, setCopied] = useState(false);
-  const [screenshotMode, setScreenshotMode] = useState(false);
   const [openPanel, setOpenPanel] = useState<"clasp" | "bead" | null>(null);
   const [claspPanelType, setClaspPanelType] = useState<"clasp" | "pendant" | "tassel">("clasp");
   const [selectedTasselId, setSelectedTasselId] = useState<string | null>(null);
@@ -259,10 +241,6 @@ export default function App() {
     [selectedPendantId]
   );
 
-  const orderCode = useMemo(
-    () => buildOrderCode(selectedClasp, selectedBeads),
-    [selectedClasp, selectedBeads]
-  );
 
   const handleSetBead = (slotIndex: number, groupId: string, beadId: string, letter?: string) => {
     if (slotIndex < 0 || slotIndex >= 7) return;
@@ -284,19 +262,6 @@ export default function App() {
     });
   };
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(orderCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setCopied(false);
-    }
-  };
-
-  const handleToggleScreenshotMode = () => {
-    setScreenshotMode((prev) => !prev);
-  };
 
   const renderBeadList = (
     items: { group: BeadGroup; bead: Bead; letter?: string; label?: string }[]
@@ -304,7 +269,7 @@ export default function App() {
     <div className="mt-3">
       <div
         className={[
-          "grid gap-2",
+          "grid gap-2 p-1",
           beadActiveTab === "number" || beadActiveTab === "decor"
             ? "grid-cols-3"
             : "grid-cols-4"
@@ -330,8 +295,8 @@ export default function App() {
               type="button"
               onClick={() => handleSetBead((activeBeadSlot ?? 1) - 1, group.id, bead.id, letter)}
               className={[
-                "rounded-xl border px-3 py-3 text-base text-center font-semibold leading-tight transition",
-                "bg-white shadow-sm border-gray-200 active:scale-95 active:bg-gray-100 flex items-center justify-center"
+                "rounded-2xl px-3 py-3 text-base text-center font-semibold leading-tight transition-all duration-200",
+                "soft-card soft-card-btn active:scale-95 flex items-center justify-center"
               ].join(" ")}
             >
               {isNumberTab ? (
@@ -360,49 +325,34 @@ export default function App() {
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas-soft text-gray-900">
+    <div className="soft-surface flex min-h-screen flex-col text-gray-900">
       {/* 預覽區：滿版高度（控制面板以 bottom sheet 覆蓋） */}
       <div
         className={[
-          "relative z-10 w-full bg-canvas-soft px-4 pb-4 pt-3",
-          "shadow-sm",
+          "relative z-10 w-full bg-[#FFF8FA] px-4 pb-4 pt-3",
           "min-h-screen"
         ].join(" ")}
       >
         <div className="mx-auto flex h-full max-w-md flex-col justify-between">
-          {/* 標題與截圖模式開關 */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-wide text-pink-400">
-                Pin Accessory
-              </p>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Ch_1217 ✦ 別針飾品模擬器
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                實際效果與大小和成品會產生差異，僅供製作溝通，無法以此模擬圖要求成品。
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleToggleScreenshotMode}
-              className={[
-                "w-[70px] shrink-0 whitespace-nowrap rounded-full border px-5 py-2 text-base font-medium transition",
-                screenshotMode
-                  ? "border-pink-400 bg-pink-50 text-pink-500"
-                  : "border-gray-900 bg-gray-900 text-white"
-              ].join(" ")}
-            >
-              完成
-            </button>
+          {/* 標題區 */}
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wide text-pink-400">
+              Pin Accessory
+            </p>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Ch_1217 ✦ 別針飾品模擬器
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              實際效果與大小和成品會產生差異，僅供製作溝通，無法以此模擬圖要求成品。
+            </p>
           </div>
 
           {/* 別針與珠子預覽 */}
-          <div className="mt-4 flex flex-1 items-center justify-center">
-            <div className="relative flex h-[600px] w-full max-w-full overflow-hidden rounded-2xl bg-white shadow-md">
+          <div className="mt-4 flex flex-1 items-center justify-center bg-[#FFF8FA]">
+            <div className="soft-card no-hover-lift relative flex h-[600px] w-full max-w-full overflow-hidden rounded-[28px]">
               {/* 左側 70% - 背景圖 + 鎖扣圖片（小螢幕置中，較大螢幕固定座標） */}
               <div
-                className="relative w-[250px] h-[600px] flex-shrink-0 overflow-hidden bg-white flex items-center justify-center md:block"
+                className="relative flex h-[600px] w-[250px] flex-shrink-0 items-center justify-center overflow-hidden bg-white/80 md:block"
               >
                 {selectedTasselId && (() => {
                   const tassel = config.tassels?.find((t: Tassel) => t.id === selectedTasselId);
@@ -482,7 +432,7 @@ export default function App() {
                 })()}
               </div>
               {/* 右側 - 鎖扣與控制區（填滿剩餘空間） */}
-              <div className="flex h-full flex-1 min-w-0 flex-col bg-white/90 p-4 pl-0">
+              <div className="flex h-full min-w-0 flex-1 flex-col bg-white p-4 pl-0">
                 {/* 鎖扣（點擊後展開下方控制面板） */}
                 <div className="flex flex-col items-end gap-8">
                   {/* 群組 1：上方功能按鈕組 */}
@@ -493,7 +443,7 @@ export default function App() {
                         setClaspPanelType("clasp");
                         setOpenPanel("clasp");
                       }}
-                      className="flex w-full items-center justify-center gap-0 rounded-full border border-gray-200 bg-white/80 pl-2 pr-3.5 py-2 shadow-sm active:scale-95"
+                      className="soft-pill soft-pill-rainbow-border flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
                     >
                       <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-pink-500 font-sans">
                         ⟳
@@ -506,7 +456,7 @@ export default function App() {
                         setClaspPanelType("pendant");
                         setOpenPanel("clasp");
                       }}
-                      className="flex w-full items-center justify-center gap-0 rounded-full border border-gray-200 bg-white/80 pl-2 pr-3.5 py-2 shadow-sm active:scale-95"
+                      className="soft-pill soft-pill-rainbow-border flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
                     >
                       <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-amber-600 font-sans">
                         ✦
@@ -519,7 +469,7 @@ export default function App() {
                         setClaspPanelType("tassel");
                         setOpenPanel("clasp");
                       }}
-                      className="flex w-full items-center justify-center gap-0 rounded-full border border-gray-200 bg-white/80 pl-2 pr-3.5 py-2 shadow-sm active:scale-95"
+                      className="soft-pill soft-pill-rainbow-border flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
                     >
                       <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-sky-500 font-sans">
                         〰
@@ -549,7 +499,7 @@ export default function App() {
                             setActiveBeadSlot(idx + 1);
                             setOpenPanel("bead");
                           }}
-                          className="flex w-full items-center justify-center gap-0 rounded-full border border-gray-200 bg-white/80 pl-2 pr-3.5 py-2 shadow-sm active:scale-95"
+                          className="soft-pill flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
                         >
                           <div className={`flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none font-sans ${colorClass}`}>
                             {hasBead ? "⟳" : "+"}
@@ -561,24 +511,6 @@ export default function App() {
                   </div>
                 </div>
 
-              {/* 截圖模式下顯示訂單代碼卡片 */}
-              {screenshotMode && (
-                <div className="mt-3 w-full rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-600">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-700">傳給賣家的格式</span>
-                    <button
-                      type="button"
-                      onClick={handleCopy}
-                      className="rounded-full bg-gray-900 px-2.5 py-1 text-sm font-medium text-white active:scale-95"
-                    >
-                      {copied ? "已複製" : "複製文字代碼"}
-                    </button>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap break-all">
-                    {orderCode || "星星扣 | A-方黑# | A-圓透S | B-愛心黑 ..."}
-                  </p>
-                </div>
-              )}
               </div>
             </div>
           </div>
@@ -587,13 +519,13 @@ export default function App() {
       </div>
 
           {/* 控制面板：彈出視窗（點擊上方功能按鈕後，以底部彈出方式顯示） */}
-      {!screenshotMode && openPanel && (
+      {openPanel && (
         <>
           {/* 鎖扣 / 掛飾 / 流蘇 選擇面板 */}
           {openPanel === "clasp" && (
-        <div className="fixed inset-x-0 bottom-0 top-[50px] z-20 rounded-t-3xl bg-white px-4 pb-6 pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.18)]">
+        <div className="soft-sheet fixed inset-x-0 bottom-0 top-[50px] z-20 rounded-t-3xl px-4 pb-6 pt-3">
           <div className="mx-auto flex h-full max-w-md flex-col">
-            <div className="sticky top-0 z-10 bg-white pb-2">
+            <div className="sticky top-0 z-10 pb-2">
               <div className="mt-2 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">
                   {claspPanelType === "clasp"
@@ -610,7 +542,7 @@ export default function App() {
                         setSelectedTasselId(null);
                         setOpenPanel(null);
                       }}
-                      className="rounded-full px-3 py-1.5 text-sm font-medium transition border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 active:scale-95"
+                      className="soft-btn rounded-full px-3 py-1.5 text-sm font-medium text-gray-600 active:scale-95"
                     >
                       不需要流蘇
                     </button>
@@ -622,7 +554,7 @@ export default function App() {
                         setSelectedPendantId(null);
                         setOpenPanel(null);
                       }}
-                      className="rounded-full px-3 py-1.5 text-sm font-medium transition border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 active:scale-95"
+                      className="soft-btn rounded-full px-3 py-1.5 text-sm font-medium text-gray-600 active:scale-95"
                     >
                       不加掛飾
                     </button>
@@ -630,7 +562,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setOpenPanel(null)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 active:scale-95"
+                    className="soft-icon-btn flex h-8 w-8 items-center justify-center text-gray-500 active:scale-95"
                     aria-label="關閉"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -641,7 +573,7 @@ export default function App() {
               </div>
             </div>
             <div className="mt-3 flex-1 overflow-y-auto pb-4">
-              <div className="mt-1 grid grid-cols-3 gap-2">
+              <div className="mt-1 grid grid-cols-3 gap-2 p-1">
                 {claspPanelType === "tassel"
                   ? (config.tassels ?? []).filter((t: Tassel) => t.id !== "").map((tassel) => {
                       const active = (tassel.id || null) === selectedTasselId;
@@ -654,10 +586,10 @@ export default function App() {
                             setOpenPanel(null);
                           }}
                           className={[
-                            "flex flex-col items-center justify-center rounded-xl border-2 px-2 py-0 text-sm transition min-h-[144px]",
+                            "flex flex-col items-center justify-center rounded-xl px-2 py-0 text-sm transition min-h-[144px]",
                             active
-                              ? "border-transparent shadow-sm [background:linear-gradient(white,white)_padding-box,linear-gradient(135deg,#f9a8d4,#e879f9,#a384fc)_border-box] [background-clip:padding-box,border-box] [background-origin:padding-box,border-box]"
-                              : "border-gray-200 bg-white text-gray-700 active:bg-gray-100"
+                              ? "soft-card text-gray-900"
+                              : "soft-card soft-card-btn text-gray-700 active:scale-95"
                           ].join(" ")}
                         >
                           {tassel.image ? (
@@ -684,10 +616,10 @@ export default function App() {
                             setOpenPanel(null);
                           }}
                           className={[
-                            "flex flex-col items-center justify-center rounded-xl border-2 px-2 py-2 text-sm transition min-h-[120px]",
+                            "flex min-h-[120px] flex-col items-center justify-center rounded-xl px-2 py-2 text-sm transition",
                             active
-                              ? "border-transparent shadow-sm [background:linear-gradient(white,white)_padding-box,linear-gradient(135deg,#f9a8d4,#e879f9,#a384fc)_border-box] [background-clip:padding-box,border-box] [background-origin:padding-box,border-box]"
-                              : "border-gray-200 bg-white text-gray-700 active:bg-gray-100"
+                              ? "soft-card soft-card-btn soft-btn-active text-gray-900"
+                              : "soft-card text-gray-700 active:scale-95"
                           ].join(" ")}
                         >
                           {p.image ? (
@@ -713,10 +645,10 @@ export default function App() {
                             setOpenPanel(null);
                           }}
                           className={[
-                            "flex flex-col items-center justify-center rounded-xl border-2 px-2 py-2 text-sm transition",
+                            "flex flex-col items-center justify-center rounded-xl px-2 py-2 text-sm transition",
                             active
-                              ? "border-transparent shadow-sm [background:linear-gradient(white,white)_padding-box,linear-gradient(135deg,#f9a8d4,#e879f9,#a384fc)_border-box] [background-clip:padding-box,border-box] [background-origin:padding-box,border-box]"
-                              : "border-gray-200 bg-white text-gray-700 active:bg-gray-100"
+                              ? "soft-card soft-card-btn soft-btn-active text-gray-900"
+                              : "soft-card text-gray-700 active:scale-95"
                           ].join(" ")}
                         >
                           <span className="text-base font-medium">{clasp.name}</span>
@@ -730,7 +662,7 @@ export default function App() {
           )}
       {/* 加入珠子面板 */}
           {openPanel === "bead" && (
-        <div className="fixed inset-x-0 bottom-0 top-[50px] z-20 rounded-t-3xl bg-white px-4 pb-6 pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.18)]">
+        <div className="soft-sheet fixed inset-x-0 bottom-0 top-[50px] z-20 rounded-t-3xl px-4 pb-6 pt-3">
           <div className="mx-auto flex h-full max-w-md flex-col">
             <div className="sticky top-0 z-10 bg-white pb-2">
               <div className="mt-2 flex items-center justify-between">
@@ -746,7 +678,7 @@ export default function App() {
                       setOpenPanel(null);
                       setActiveBeadSlot(null);
                     }}
-                    className="rounded-full px-2.5 py-1 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-800 active:scale-95"
+                    className="soft-btn rounded-full px-2.5 py-1 text-sm font-medium text-gray-600 active:scale-95"
                   >
                     清空
                   </button>
@@ -756,7 +688,7 @@ export default function App() {
                       setOpenPanel(null);
                       setActiveBeadSlot(null);
                     }}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 active:scale-95"
+                    className="soft-icon-btn flex h-8 w-8 items-center justify-center text-gray-500 active:scale-95"
                     aria-label="關閉"
                   >
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -766,7 +698,7 @@ export default function App() {
                 </div>
               </div>
               {/* 珠子分類 Tabs：方形 / 圓形 / 數字 / 裝飾 */}
-              <div className="mt-2 flex rounded-full bg-gray-100 p-1 text-sm">
+              <div className="soft-inset mt-2 flex p-1 text-sm">
                 {[
                   { id: "squareLetter" as BeadTabId, label: "方形" },
                   { id: "roundLetter" as BeadTabId, label: "圓形" },
@@ -783,7 +715,7 @@ export default function App() {
                     className={[
                       "flex-1 rounded-full px-2 py-1.5 font-medium transition",
                       beadActiveTab === tab.id
-                        ? "bg-gray-900 text-white shadow-sm"
+                        ? "soft-btn-active text-gray-900"
                         : "text-gray-500"
                     ].join(" ")}
                   >
@@ -795,7 +727,7 @@ export default function App() {
               {(() => {
                 const subOpts = getSecondLayerOptions(beadActiveTab);
                 return subOpts ? (
-                <div className="mt-2 flex rounded-full bg-gray-100 p-1 text-sm">
+                <div className="soft-inset mt-2 flex p-1 text-sm">
                   {subOpts.map((item) => (
                     <button
                       key={item.id}
@@ -804,7 +736,7 @@ export default function App() {
                       className={[
                         "flex-1 rounded-full px-2 py-1.5 font-medium transition",
                         beadSubFilter === item.id
-                          ? "bg-gray-900 text-white shadow-sm"
+                          ? "soft-btn-active text-gray-900"
                           : "text-gray-500"
                       ].join(" ")}
                     >
@@ -815,14 +747,14 @@ export default function App() {
                 ) : null;
               })()}
               {((beadActiveTab === "squareLetter" || beadActiveTab === "roundLetter") && beadSubFilter === "silver") && (
-                <p className="mt-2 text-sm text-amber-600">
+                <p className="mt-2 text-sm text-gray-400">
                   較易產生磨痕或電鍍痕跡
                 </p>
               )}
             </div>
-            <div className="mt-3 flex-1 space-y-4 overflow-y-auto pb-4">
+            <div className="mt-3 flex-1 space-y-4 overflow-y-auto px-1 pb-4">
               {isLetterBeadTab(beadActiveTab, beadSubFilter) ? (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-2 p-1">
                   {/* 方形字母-黑色：額外符號 #、❤︎ */}
                     {beadActiveTab === "squareLetter" &&
                     beadSubFilter === "black" &&
@@ -834,8 +766,8 @@ export default function App() {
                           handleSetBead((activeBeadSlot ?? 1) - 1, "groupA", "square_symbol_black", sym)
                         }
                         className={[
-                          "rounded-xl border px-3 py-3 text-base text-center font-semibold leading-tight transition",
-                          "bg-white shadow-sm border-gray-200 active:scale-95 active:bg-gray-100 flex items-center justify-center"
+                          "rounded-2xl px-3 py-3 text-base text-center font-semibold leading-tight transition-all duration-200",
+                          "soft-card active:scale-95 flex items-center justify-center"
                         ].join(" ")}
                       >
                         <img
@@ -855,8 +787,8 @@ export default function App() {
                           handleSetBead((activeBeadSlot ?? 1) - 1, info.groupId, info.beadId, letter)
                         }
                         className={[
-                          "rounded-xl border px-3 py-3 text-base text-center font-semibold leading-tight transition",
-                          "bg-white shadow-sm border-gray-200 active:scale-95 active:bg-gray-100 flex items-center justify-center"
+                          "rounded-xl px-3 py-3 text-base text-center font-semibold leading-tight transition",
+                          "soft-card active:scale-95 flex items-center justify-center"
                         ].join(" ")}
                       >
                         <img

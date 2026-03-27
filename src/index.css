@@ -7,7 +7,7 @@ html,
 body,
 #root {
   height: 100%;
-  background-color: #f8f4f6;
+  background-color: #fff8fa;
 }
 
 /* 全站僅手機版：不論螢幕大小都顯示手機尺寸（430px 寬，置中） */
@@ -22,6 +22,121 @@ body {
   font-family: "Roboto", "Noto Sans TC", sans-serif;
   @apply text-gray-900;
 }
+
+@layer components {
+  .soft-surface {
+    background: #fff8fa;
+  }
+
+  .soft-card {
+    background: #ffffff;
+    border: 2px solid #ffe3f1;
+    border-radius: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  .soft-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .no-hover-lift {
+    box-shadow: none;
+    border: none;
+  }
+
+  .no-hover-lift:hover {
+    transform: none;
+    box-shadow: none;
+    filter: none;
+  }
+
+  .soft-pill,
+  .soft-btn {
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background:
+      linear-gradient(#ffffff, #ffffff) padding-box,
+      linear-gradient(135deg, #ffb6d9, #e6d5ff) border-box;
+    color: #333;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  .soft-pill:hover,
+  .soft-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .soft-pill:active,
+  .soft-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .soft-btn-active {
+    color: #333;
+    background: linear-gradient(135deg, #ffb6d9, #e6d5ff);
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .soft-card.soft-btn-active,
+  .soft-card-btn.soft-btn-active {
+    border: none !important;
+    border-color: transparent !important;
+    background: linear-gradient(135deg, #ffb6d9, #e6d5ff) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .soft-inset {
+    border-radius: 9999px;
+    background: #fff8fa;
+    border: none;
+    box-shadow: none;
+  }
+
+  .soft-icon-btn {
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background:
+      linear-gradient(#ffffff, #ffffff) padding-box,
+      linear-gradient(135deg, #ffb6d9, #e6d5ff) border-box;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  .soft-icon-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 14px rgba(0, 0, 0, 0.08);
+  }
+
+  .soft-sheet {
+    background: #ffffff;
+    border: none;
+    box-shadow: none;
+  }
+
+  .soft-pill-rainbow-border,
+  .soft-card-btn {
+    border: 2px solid transparent;
+    background:
+      linear-gradient(#ffffff, #ffffff) padding-box,
+      linear-gradient(135deg, #ffb6d9, #e6d5ff) border-box;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .soft-pill-rainbow-border {
+    border-radius: 9999px;
+  }
+
+  .soft-card-btn {
+    border-radius: 16px;
+  }
+}
+
 
 button:disabled {
   @apply cursor-not-allowed;
