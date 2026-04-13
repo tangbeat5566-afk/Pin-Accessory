@@ -4,12 +4,13 @@
     "currency": "TWD"
   },
   "tassels": [
-    { "id": "", "name": "不需要流蘇", "image": null },
     { "id": "t-1", "name": "t-1", "image": "/images/Components/t-1.png" },
     { "id": "t-2", "name": "t-2", "image": "/images/Components/t-2.png" },
     { "id": "t-3", "name": "t-3", "image": "/images/Components/t-3.png" },
     { "id": "t-4", "name": "t-4", "image": "/images/Components/t-4.png" },
-    { "id": "t-5", "name": "t-5", "image": "/images/Components/t-5.png" }
+    { "id": "t-5", "name": "t-5", "image": "/images/Components/t-5.png" },
+    { "id": "t-6", "name": "t-6", "image": "/images/Components/t-6.png" },
+    { "id": "t-7", "name": "t-7", "image": "/images/Components/t-7.png" }
   ],
   "pendants": [
     { "id": "", "name": "不加掛件", "image": null },
@@ -23,21 +24,21 @@
       "id": "u_clasp",
       "name": "U字扣",
       "code": "U",
-      "image": "/images/clasps/u.jpg",
+      "image": "/images/clasps/u.png",
       "price": 20
     },
     {
       "id": "star",
       "name": "星星扣",
       "code": "STAR",
-      "image": "/images/clasps/star.jpg",
+      "image": "/images/clasps/star.png",
       "price": 25
     },
     {
       "id": "moon",
       "name": "月亮扣",
       "code": "MOON",
-      "image": "/images/clasps/moon.jpg",
+      "image": "/images/clasps/moon.png",
       "price": 25
     }
   ],
@@ -250,6 +251,13 @@
           "name": "其他-1",
           "code": "其他1",
           "image": "/images/beads/d-o-1.png",
+          "price": 6
+        },
+        {
+          "id": "other_2",
+          "name": "其他-2",
+          "code": "其他2",
+          "image": "/images/beads/d-o-2.png",
           "price": 6
         }
       ]

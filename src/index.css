@@ -83,12 +83,25 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
+  /* 圖片按鈕的選取狀態：加粗邊框（5px），不使用漸層背景 */
+  .soft-img-btn-active {
+    background: #ffffff !important;
+    border: 5px solid #ffb6d9 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
   .soft-card.soft-btn-active,
   .soft-card-btn.soft-btn-active {
     border: none !important;
     border-color: transparent !important;
     background: linear-gradient(135deg, #ffb6d9, #e6d5ff) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .soft-card.soft-img-btn-active,
+  .soft-card-btn.soft-img-btn-active {
+    background: #ffffff !important;
+    border: 5px solid #ffb6d9 !important;
   }
 
   .soft-inset {

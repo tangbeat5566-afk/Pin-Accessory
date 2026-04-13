@@ -4,7 +4,6 @@ import config from "../config.json";
 type Config = typeof config;
 type Clasp = Config["clasps"][number];
 type Tassel = Config["tassels"][number];
-type Pendant = Config["pendants"][number];
 type BeadGroup = Config["beadGroups"][number];
 type Bead = BeadGroup["beads"][number];
 
@@ -187,6 +186,8 @@ function getBeadImageUrl(sel: SelectedBead | null): string {
         return "/images/beads/d-r-ft.png";
       case "other_1":
         return "/images/beads/d-o-1.png";
+      case "other_2":
+        return "/images/beads/d-o-2.png";
     }
   }
 
@@ -221,24 +222,26 @@ export default function App() {
   const [beadSubFilter, setBeadSubFilter] = useState<string>("silver");
   const [activeBeadSlot, setActiveBeadSlot] = useState<number | null>(null);
   const [selectedClaspId, setSelectedClaspId] = useState<string>(
-    config.clasps[0]?.id ?? ""
+    config.clasps.find((c) => c.id === "star")?.id ?? config.clasps[0]?.id ?? ""
   );
   const [selectedBeads, setSelectedBeads] = useState<(SelectedBead | null)[]>(
     () => Array(7).fill(null)
   );
   const [openPanel, setOpenPanel] = useState<"clasp" | "bead" | null>(null);
-  const [claspPanelType, setClaspPanelType] = useState<"clasp" | "pendant" | "tassel">("clasp");
-  const [selectedTasselId, setSelectedTasselId] = useState<string | null>(null);
-  const [selectedPendantId, setSelectedPendantId] = useState<string | null>(null);
+  const [claspPanelType, setClaspPanelType] = useState<"clasp" | "tassel">("clasp");
+  // 預設選擇流蘇 t-4（若不存在則退回第一款）
+  const [selectedTasselId, setSelectedTasselId] = useState<string>(() => {
+    const preferred = config.tassels?.find((t: Tassel) => t.id === "t-4")?.id;
+    const fallback = config.tassels?.find((t: Tassel) => t.id)?.id;
+    return preferred ?? fallback ?? "";
+  });
 
   const selectedClasp = useMemo(
-    () => config.clasps.find((c) => c.id === selectedClaspId) ?? config.clasps[0],
+    () =>
+      config.clasps.find((c) => c.id === selectedClaspId) ??
+      config.clasps.find((c) => c.id === "star") ??
+      config.clasps[0],
     [selectedClaspId]
-  );
-
-  const selectedPendant = useMemo(
-    () => (config.pendants ?? []).find((p: Pendant) => (p.id || "") === (selectedPendantId ?? "")) ?? null,
-    [selectedPendantId]
   );
 
 
@@ -260,6 +263,16 @@ export default function App() {
       next[slotIndex] = null;
       return next;
     });
+  };
+
+  const activeSlotIndex = (activeBeadSlot ?? 1) - 1;
+  const activeSlotSelection = selectedBeads[activeSlotIndex] ?? null;
+
+  const isActiveSelection = (groupId: string, beadId: string, letter?: string) => {
+    if (!activeSlotSelection) return false;
+    if (activeSlotSelection.groupId !== groupId) return false;
+    if (activeSlotSelection.id !== beadId) return false;
+    return (activeSlotSelection.letter ?? "") === (letter ?? "");
   };
 
 
@@ -296,7 +309,8 @@ export default function App() {
               onClick={() => handleSetBead((activeBeadSlot ?? 1) - 1, group.id, bead.id, letter)}
               className={[
                 "rounded-2xl px-3 py-3 text-base text-center font-semibold leading-tight transition-all duration-200",
-                "soft-card soft-card-btn active:scale-95 flex items-center justify-center"
+                "soft-card soft-card-btn active:scale-95 flex items-center justify-center",
+                isActiveSelection(group.id, bead.id, letter) ? "soft-img-btn-active" : ""
               ].join(" ")}
             >
               {isNumberTab ? (
@@ -349,12 +363,12 @@ export default function App() {
 
           {/* 別針與珠子預覽 */}
           <div className="mt-4 flex flex-1 items-center justify-center bg-[#FFF8FA]">
-            <div className="soft-card no-hover-lift relative flex h-[600px] w-full max-w-full overflow-hidden rounded-[28px]">
+            <div className="soft-card no-hover-lift relative flex h-[550px] w-full max-w-full overflow-hidden rounded-[28px]">
               {/* 左側 70% - 背景圖 + 鎖扣圖片（小螢幕置中，較大螢幕固定座標） */}
               <div
-                className="relative flex h-[600px] w-[250px] flex-shrink-0 items-center justify-center overflow-hidden bg-white/80 md:block"
+                className="relative flex h-[550px] w-[250px] flex-shrink-0 items-center justify-center overflow-hidden bg-white/80 md:block"
               >
-                {selectedTasselId && (() => {
+                {selectedTasselId !== "" && (() => {
                   const tassel = config.tassels?.find((t: Tassel) => t.id === selectedTasselId);
                   return tassel?.image ? (
                     <img
@@ -371,14 +385,6 @@ export default function App() {
                   className="absolute inset-0 object-contain"
                   style={{ left: '20px', top: '140px', width: '300px', height: '300px' }}
                 />
-                {selectedPendant?.image && (
-                  <img
-                    src={selectedPendant.image}
-                    alt=""
-                    className="absolute left-[46px] top-[176px] h-[120px] w-auto object-contain"
-                    style={{ zIndex: 1, transform: 'rotate(20deg)' }}
-                  />
-                )}
                 <img
                   src={selectedClasp.image}
                   alt={selectedClasp.name}
@@ -411,6 +417,7 @@ export default function App() {
                     const isFlipBead =
                       sel?.groupId === "groupB" &&
                       ["heart_hollow_flip", "heart_black_flip", "heart_white_flip"].includes(sel?.id ?? "");
+                    const isNoRotateBead = sel?.groupId === "groupB" && sel?.id === "other_2";
                     return (
                       <img
                         key={i}
@@ -422,9 +429,11 @@ export default function App() {
                           top: `${tops[i]}px`,
                           width: size,
                           height: size,
-                          transform: isFlipBead
-                            ? "translateX(-50%) rotate(90deg) scaleX(-1)"
-                            : "translateX(-50%) rotate(90deg)",
+                          transform: isNoRotateBead
+                            ? "translateX(-50%)"
+                            : isFlipBead
+                              ? "translateX(-50%) rotate(90deg) scaleX(-1)"
+                              : "translateX(-50%) rotate(90deg)",
                         }}
                       />
                     );
@@ -434,86 +443,70 @@ export default function App() {
               {/* 右側 - 鎖扣與控制區（填滿剩餘空間） */}
               <div className="flex h-full min-w-0 flex-1 flex-col bg-white p-4 pl-0">
                 {/* 鎖扣（點擊後展開下方控制面板） */}
-                <div className="flex flex-col items-end gap-8">
-                  {/* 群組 1：上方功能按鈕組 */}
-                  <div className="flex w-full flex-col items-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setClaspPanelType("clasp");
-                        setOpenPanel("clasp");
-                      }}
-                      className="soft-pill soft-pill-rainbow-border flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-pink-500 font-sans">
-                        ⟳
-                      </div>
-                      <span className="text-sm leading-none text-gray-600">換鎖扣</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setClaspPanelType("pendant");
-                        setOpenPanel("clasp");
-                      }}
-                      className="soft-pill soft-pill-rainbow-border flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-amber-600 font-sans">
-                        ✦
-                      </div>
-                      <span className="text-sm leading-none text-gray-600">加掛飾</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setClaspPanelType("tassel");
-                        setOpenPanel("clasp");
-                      }}
-                      className="soft-pill soft-pill-rainbow-border flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-sky-500 font-sans">
-                        〰
-                      </div>
-                      <span className="text-sm leading-none text-gray-600">加流蘇</span>
-                    </button>
-                  </div>
-                  {/* 群組 2：其餘 7 個按鈕一組（每顆不同顏色） */}
-                  <div className="flex w-full flex-col items-end gap-2">
-                    {(
-                      [
-                        "text-pink-500",
-                        "text-violet-500",
-                        "text-sky-500",
-                        "text-emerald-500",
-                        "text-amber-600",
-                        "text-rose-500",
-                        "text-fuchsia-500"
-                      ] as const
-                    ).map((colorClass, idx) => {
-                      const hasBead = selectedBeads[idx] !== null;
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setActiveBeadSlot(idx + 1);
-                            setOpenPanel("bead");
-                          }}
-                          className="soft-pill flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
-                        >
-                          <div className={`flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none font-sans ${colorClass}`}>
-                            {hasBead ? "⟳" : "+"}
-                          </div>
-                          <span className="text-sm leading-none text-gray-600">{idx + 1}號珠</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                <div className="flex h-full w-full flex-col items-end justify-between py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setClaspPanelType("clasp");
+                      setOpenPanel("clasp");
+                    }}
+                    className="soft-pill soft-pill-rainbow-border flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
+                  >
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-pink-500 font-sans">
+                      ⟳
+                    </div>
+                    <span className="text-sm leading-none text-gray-600">換鎖扣</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setClaspPanelType("tassel");
+                      setOpenPanel("clasp");
+                    }}
+                    className="soft-pill soft-pill-rainbow-border flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
+                  >
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none text-sky-500 font-sans">
+                      〰
+                    </div>
+                    <span className="text-sm leading-none text-gray-600">換配件</span>
+                  </button>
+                  {(
+                    [
+                      "text-pink-500",
+                      "text-violet-500",
+                      "text-sky-500",
+                      "text-emerald-500",
+                      "text-amber-600",
+                      "text-rose-500",
+                      "text-fuchsia-500"
+                    ] as const
+                  ).map((colorClass, idx) => {
+                    const hasBead = selectedBeads[idx] !== null;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setActiveBeadSlot(idx + 1);
+                          setOpenPanel("bead");
+                        }}
+                        className="soft-pill flex w-full items-center justify-center gap-0 pl-2 pr-3.5 py-2 active:scale-95"
+                      >
+                        <div className={`flex h-6 w-6 items-center justify-center rounded-full text-lg font-semibold leading-none font-sans ${colorClass}`}>
+                          {hasBead ? "⟳" : "+"}
+                        </div>
+                        <span className="text-sm leading-none text-gray-600">{idx + 1}號珠</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
               </div>
             </div>
           </div>
+          <p className="mt-2 text-center text-sm font-medium text-gray-600">
+            ❤️💜設計完成後截圖保存，用聊聊貼給我看喔🩵💙
+          </p>
 
         </div>
       </div>
@@ -528,37 +521,9 @@ export default function App() {
             <div className="sticky top-0 z-10 pb-2">
               <div className="mt-2 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {claspPanelType === "clasp"
-                    ? "鎖扣"
-                    : claspPanelType === "pendant"
-                    ? "掛飾"
-                    : "流蘇"}
+                  {claspPanelType === "clasp" ? "鎖扣" : "流蘇"}
                 </h2>
                 <div className="flex items-center gap-2">
-                  {claspPanelType === "tassel" && selectedTasselId !== null && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedTasselId(null);
-                        setOpenPanel(null);
-                      }}
-                      className="soft-btn rounded-full px-3 py-1.5 text-sm font-medium text-gray-600 active:scale-95"
-                    >
-                      不需要流蘇
-                    </button>
-                  )}
-                  {claspPanelType === "pendant" && selectedPendantId !== null && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedPendantId(null);
-                        setOpenPanel(null);
-                      }}
-                      className="soft-btn rounded-full px-3 py-1.5 text-sm font-medium text-gray-600 active:scale-95"
-                    >
-                      不加掛飾
-                    </button>
-                  )}
                   <button
                     type="button"
                     onClick={() => setOpenPanel(null)}
@@ -582,13 +547,13 @@ export default function App() {
                           key={tassel.id || "none"}
                           type="button"
                           onClick={() => {
-                            setSelectedTasselId(tassel.id || null);
+                            setSelectedTasselId(tassel.id || "");
                             setOpenPanel(null);
                           }}
                           className={[
                             "flex flex-col items-center justify-center rounded-xl px-2 py-0 text-sm transition min-h-[144px]",
                             active
-                              ? "soft-card text-gray-900"
+                              ? "soft-card soft-img-btn-active text-gray-900"
                               : "soft-card soft-card-btn text-gray-700 active:scale-95"
                           ].join(" ")}
                         >
@@ -600,36 +565,6 @@ export default function App() {
                             />
                           ) : (
                             <span className="text-base font-medium">{tassel.name}</span>
-                          )}
-                        </button>
-                      );
-                    })
-                  : claspPanelType === "pendant"
-                  ? (config.pendants ?? []).filter((p: Pendant) => p.id !== "").map((p: Pendant) => {
-                      const active = (p.id || null) === selectedPendantId;
-                      return (
-                        <button
-                          key={p.id || "none"}
-                          type="button"
-                          onClick={() => {
-                            setSelectedPendantId(p.id || null);
-                            setOpenPanel(null);
-                          }}
-                          className={[
-                            "flex min-h-[120px] flex-col items-center justify-center rounded-xl px-2 py-2 text-sm transition",
-                            active
-                              ? "soft-card soft-card-btn soft-btn-active text-gray-900"
-                              : "soft-card text-gray-700 active:scale-95"
-                          ].join(" ")}
-                        >
-                          {p.image ? (
-                            <img
-                              src={p.image}
-                              alt=""
-                              className="h-24 w-auto max-w-full object-contain"
-                            />
-                          ) : (
-                            <div className="h-16 w-16 rounded-full border-2 border-dashed border-gray-300 bg-gray-50" aria-hidden />
                           )}
                         </button>
                       );
@@ -767,7 +702,8 @@ export default function App() {
                         }
                         className={[
                           "rounded-2xl px-3 py-3 text-base text-center font-semibold leading-tight transition-all duration-200",
-                          "soft-card active:scale-95 flex items-center justify-center"
+                          "soft-card active:scale-95 flex items-center justify-center",
+                          isActiveSelection("groupA", "square_symbol_black", sym) ? "soft-img-btn-active" : ""
                         ].join(" ")}
                       >
                         <img
@@ -788,7 +724,8 @@ export default function App() {
                         }
                         className={[
                           "rounded-xl px-3 py-3 text-base text-center font-semibold leading-tight transition",
-                          "soft-card active:scale-95 flex items-center justify-center"
+                          "soft-card active:scale-95 flex items-center justify-center",
+                          isActiveSelection(info.groupId, info.beadId, letter) ? "soft-img-btn-active" : ""
                         ].join(" ")}
                       >
                         <img
@@ -838,17 +775,6 @@ export default function App() {
         </>
       )}
 
-      {/* 桌面版：左右版面（簡易） */}
-      <div className="hidden min-h-screen bg-gray-50 p-6 lg:flex lg:items-stretch lg:justify-center">
-        <div className="flex w-full max-w-5xl gap-6 rounded-3xl bg-white p-4 shadow-lg">
-          <div className="flex-1 border-r border-gray-100 pr-4">
-            {/* 可以未來擴充為更大預覽區 */}
-          </div>
-          <div className="flex-[1.1] pl-4">
-            {/* 未來可重用手機控制面板邏輯 */}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
