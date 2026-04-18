@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import config from "../config.json";
 
 type Config = typeof config;
@@ -235,6 +235,39 @@ export default function App() {
     const fallback = config.tassels?.find((t: Tassel) => t.id)?.id;
     return preferred ?? fallback ?? "";
   });
+  const heartDecorCountInFirstSix = useMemo(
+    () =>
+      selectedBeads
+        .slice(0, 6)
+        .filter((sel) => sel?.groupId === "groupB" && (sel.id ?? "").startsWith("heart_")).length,
+    [selectedBeads]
+  );
+  const isSeventhSlot = activeBeadSlot === 7;
+  const isSeventhSlotFullyLocked = isSeventhSlot && heartDecorCountInFirstSix >= 2;
+  const isSeventhSlotHeartLocked = isSeventhSlot && heartDecorCountInFirstSix >= 1;
+  const isHeartDecorSelectionDisabled =
+    isSeventhSlotHeartLocked && beadActiveTab === "decor" && beadSubFilter === "heart";
+  const isBeadSelectionDisabled = isSeventhSlotFullyLocked || isHeartDecorSelectionDisabled;
+
+  useEffect(() => {
+    const seventh = selectedBeads[6];
+    if (!seventh) return;
+
+    const shouldClearSeventh =
+      heartDecorCountInFirstSix >= 2 ||
+      (heartDecorCountInFirstSix >= 1 &&
+        seventh.groupId === "groupB" &&
+        seventh.id.startsWith("heart_"));
+
+    if (!shouldClearSeventh) return;
+
+    setSelectedBeads((prev) => {
+      if (!prev[6]) return prev;
+      const next = [...prev];
+      next[6] = null;
+      return next;
+    });
+  }, [heartDecorCountInFirstSix, selectedBeads]);
 
   const selectedClasp = useMemo(
     () =>
@@ -247,6 +280,10 @@ export default function App() {
 
   const handleSetBead = (slotIndex: number, groupId: string, beadId: string, letter?: string) => {
     if (slotIndex < 0 || slotIndex >= 7) return;
+    if (slotIndex === 6) {
+      if (heartDecorCountInFirstSix >= 2) return;
+      if (groupId === "groupB" && heartDecorCountInFirstSix >= 1 && beadId.startsWith("heart_")) return;
+    }
     setSelectedBeads((prev) => {
       const next = [...prev];
       next[slotIndex] = { id: beadId, groupId, ...(letter && { letter }) };
@@ -306,10 +343,12 @@ export default function App() {
             <button
               key={`${group.id}-${bead.id}${letter ?? ""}`}
               type="button"
+              disabled={isBeadSelectionDisabled}
               onClick={() => handleSetBead((activeBeadSlot ?? 1) - 1, group.id, bead.id, letter)}
               className={[
                 "rounded-2xl px-3 py-3 text-base text-center font-semibold leading-tight transition-all duration-200",
                 "soft-card soft-card-btn active:scale-95 flex items-center justify-center",
+                isBeadSelectionDisabled ? "cursor-not-allowed opacity-40" : "",
                 isActiveSelection(group.id, bead.id, letter) ? "soft-img-btn-active" : ""
               ].join(" ")}
             >
@@ -643,13 +682,17 @@ export default function App() {
                   <button
                     key={tab.id}
                     type="button"
+                    disabled={isSeventhSlotFullyLocked}
                     onClick={() => {
+                    if (isSeventhSlotFullyLocked) return;
                     setBeadActiveTab(tab.id);
                     setBeadSubFilter(getDefaultSubFilter(tab.id));
                   }}
                     className={[
                       "flex-1 rounded-full px-2 py-1.5 font-medium transition",
-                      beadActiveTab === tab.id
+                      isSeventhSlotFullyLocked
+                        ? "cursor-not-allowed text-gray-300"
+                        : beadActiveTab === tab.id
                         ? "soft-btn-active text-gray-900"
                         : "text-gray-500"
                     ].join(" ")}
@@ -662,23 +705,36 @@ export default function App() {
               {(() => {
                 const subOpts = getSecondLayerOptions(beadActiveTab);
                 return subOpts ? (
-                <div className="soft-inset mt-2 flex p-1 text-sm">
-                  {subOpts.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setBeadSubFilter(item.id)}
-                      className={[
-                        "flex-1 rounded-full px-2 py-1.5 font-medium transition",
-                        beadSubFilter === item.id
-                          ? "soft-btn-active text-gray-900"
-                          : "text-gray-500"
-                      ].join(" ")}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
+                  <>
+                    <div className="soft-inset mt-2 flex p-1 text-sm">
+                      {subOpts.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          disabled={isSeventhSlotFullyLocked}
+                          onClick={() => {
+                            if (isSeventhSlotFullyLocked) return;
+                            setBeadSubFilter(item.id);
+                          }}
+                          className={[
+                            "flex-1 rounded-full px-2 py-1.5 font-medium transition",
+                            isSeventhSlotFullyLocked
+                              ? "cursor-not-allowed text-gray-300"
+                              : beadSubFilter === item.id
+                                ? "soft-btn-active text-gray-900"
+                                : "text-gray-500"
+                          ].join(" ")}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                    {(isSeventhSlotFullyLocked || isHeartDecorSelectionDisabled) && (
+                      <p className="mt-2 text-sm text-gray-400">
+                        剩餘空間不足
+                      </p>
+                    )}
+                  </>
                 ) : null;
               })()}
               {((beadActiveTab === "squareLetter" || beadActiveTab === "roundLetter") && beadSubFilter === "silver") && (
@@ -697,12 +753,14 @@ export default function App() {
                       <button
                         key={sym}
                         type="button"
+                        disabled={isBeadSelectionDisabled}
                         onClick={() =>
                           handleSetBead((activeBeadSlot ?? 1) - 1, "groupA", "square_symbol_black", sym)
                         }
                         className={[
                           "rounded-2xl px-3 py-3 text-base text-center font-semibold leading-tight transition-all duration-200",
                           "soft-card active:scale-95 flex items-center justify-center",
+                          isBeadSelectionDisabled ? "cursor-not-allowed opacity-40" : "",
                           isActiveSelection("groupA", "square_symbol_black", sym) ? "soft-img-btn-active" : ""
                         ].join(" ")}
                       >
@@ -719,12 +777,14 @@ export default function App() {
                       <button
                         key={letter}
                         type="button"
+                        disabled={isBeadSelectionDisabled}
                         onClick={() =>
                           handleSetBead((activeBeadSlot ?? 1) - 1, info.groupId, info.beadId, letter)
                         }
                         className={[
                           "rounded-xl px-3 py-3 text-base text-center font-semibold leading-tight transition",
                           "soft-card active:scale-95 flex items-center justify-center",
+                          isBeadSelectionDisabled ? "cursor-not-allowed opacity-40" : "",
                           isActiveSelection(info.groupId, info.beadId, letter) ? "soft-img-btn-active" : ""
                         ].join(" ")}
                       >
